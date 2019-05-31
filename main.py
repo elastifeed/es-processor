@@ -21,7 +21,6 @@ USER = "dummy"
 
 # A couple of active feeds
 FEEDS = [
-    "http://rss.cnn.com/rss/cnn_topstories.rss",
     "https://rss.golem.de/rss.php?feed=RSS2.0",
     "https://www.heise.de/rss/heise-atom.xml",
     "http://rss.focus.de/fol/XML/rss_folnews.xml"
@@ -53,23 +52,32 @@ async def job(rss, redis):
     # Get last parsed timestamp out of redis or assume it was scraped on 10.05.2019
     last_time = await redis.execute("get", rss) or b"2019-05-10T00:00:00.000000+00:00"
 
-    async with aiohttp.ClientSession() as sess:
-        async with sess.post(ES_RSS_URL, json={"url": rss, "from_time": last_time.decode("utf-8")}) as resp:
-            text = await resp.text()
+    try:
+        async with aiohttp.ClientSession() as sess:
+            async with sess.post(ES_RSS_URL, json={"url": rss, "from_time": last_time.decode("utf-8")}) as resp:
+                posts = None
 
-            if text not in ["null", ""]:
-                for post in json.loads(text):
-                    tasks.append(asyncio.create_task(add_content(post)))
+                try:
+                    posts = json.loads(await resp.text())
+                except:
+                    pass
 
-    for t in tasks:
-        await t
+                if posts:
+                    for post in posts:
+                        tasks.append(asyncio.create_task(add_content(post)))
 
-    async with aiohttp.ClientSession() as sess:
-        async with sess.post(ES_PUSHER_URL, json={"index": USER, "docs": documents}) as resp:
-            logger.info(f"Added {len(documents)} to elasticsearch index {USER}")
-            logger.debug(await resp.text())
+        for t in tasks:
+            await t
 
-    await redis.execute("set", rss, datetime.now(timezone.utc).astimezone().isoformat()) # Update timestamp
+        async with aiohttp.ClientSession() as sess:
+            async with sess.post(ES_PUSHER_URL, json={"index": USER, "docs": documents}) as resp:
+                logger.info(f"Added {len(documents)} to elasticsearch index {USER}")
+                logger.debug(await resp.text())
+
+        await redis.execute("set", rss, datetime.now(timezone.utc).astimezone().isoformat()) # Update timestamp
+
+    except Exception as e:
+        logger.exception(e)
 
 
 async def amain():
