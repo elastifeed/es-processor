@@ -1,0 +1,53 @@
+# Hacky way of getting redis in k8s, do not use for production :-)
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: elastifeed
+  name: redis
+  labels:
+    app: redis
+spec:
+  containers:
+    - name: redis
+      image: redis:5.0-alpine
+      ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: elastifeed
+  name: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  namespace: elastifeed
+  name: dummy-middleware-cronjob
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: dummy-middleware
+              image: quay.io/elastifeed/dummy-middleware:latest
+              env:
+                - name: ES_RSS_URL
+                  value: "http://es-rss-service/parse"
+                - name: ES_EXTRACTOR_URL
+                  value: "http://es-extractor-service/mercury/url"
+                - name: ES_PUSHER_URL
+                  value: "http://es-pusher-service/add"
+                - name: REDIS_URL
+                  value: "redis://redis"
+          restartPolicy: Never # We do not want to reexecute it when it fails atm, it's just a dummy
