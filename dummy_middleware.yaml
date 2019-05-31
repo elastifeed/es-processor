@@ -40,7 +40,7 @@ spec:
         spec:
           containers:
             - name: dummy-middleware
-              image: quay.io/elastifeed/dummy-middleware:latest
+              image: quay.io/elastifeed/dummy-middleware:v0.1
               env:
                 - name: ES_RSS_URL
                   value: "http://es-rss-service/parse"
@@ -48,6 +48,6 @@ spec:
                   value: "http://es-extractor-service/mercury/url"
                 - name: ES_PUSHER_URL
                   value: "http://es-pusher-service/add"
-                - name: REDIS_URL
+                - name: ES_REDIS_URL
                   value: "redis://redis"
-          restartPolicy: Never # We do not want to reexecute it when it fails atm, it's just a dummy
+          restartPolicy: Never

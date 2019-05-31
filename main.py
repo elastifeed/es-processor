@@ -3,11 +3,13 @@ import asyncio
 import json
 import os
 from datetime import datetime, timezone
-from logging import getLogger
+import logging
 import aioredis
 import aiohttp
 
-logger = getLogger(__name__)
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Get configuration out of environment, if not present, set development paths
 ES_RSS_URL = os.environ.get("ES_RSS_URL") or "http://localhost:8001/api/v1/namespaces/elastifeed/services/es-rss-service:80/proxy/parse"
@@ -19,9 +21,11 @@ USER = "dummy"
 
 # A couple of active feeds
 FEEDS = [
+    "http://rss.cnn.com/rss/cnn_topstories.rss",
     "https://rss.golem.de/rss.php?feed=RSS2.0",
     "https://www.heise.de/rss/heise-atom.xml",
     "http://rss.focus.de/fol/XML/rss_folnews.xml"
+
 ]
 
 
@@ -51,10 +55,10 @@ async def job(rss, redis):
 
     async with aiohttp.ClientSession() as sess:
         async with sess.post(ES_RSS_URL, json={"url": rss, "from_time": last_time.decode("utf-8")}) as resp:
-            posts = json.loads(await resp.text())
+            text = await resp.text()
 
-            if posts:
-                for post in posts:
+            if text not in ["null", ""]:
+                for post in json.loads(text):
                     tasks.append(asyncio.create_task(add_content(post)))
 
     for t in tasks:
@@ -78,7 +82,7 @@ async def amain():
     for t in tasks:
         await t
 
-    
+
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(amain())
