@@ -40,12 +40,12 @@ spec:
         spec:
           containers:
             - name: dummy-middleware
-              image: quay.io/elastifeed/dummy-middleware:v0.3
+              image: quay.io/elastifeed/dummy-middleware:v0.4
               env:
                 - name: ES_RSS_URL
                   value: "http://es-rss-service/parse"
-                - name: ES_EXTRACTOR_URL
-                  value: "http://es-extractor-service/mercury/url"
+                - name: ES_SCRAPER_URL
+                  value: "http://es-scraper-service/scrape/all"
                 - name: ES_PUSHER_URL
                   value: "http://es-pusher-service/add"
                 - name: ES_REDIS_URL
