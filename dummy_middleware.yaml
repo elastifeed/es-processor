@@ -40,7 +40,7 @@ spec:
         spec:
           containers:
             - name: dummy-middleware
-              image: quay.io/elastifeed/dummy-middleware:v0.2
+              image: quay.io/elastifeed/dummy-middleware:v0.3
               env:
                 - name: ES_RSS_URL
                   value: "http://es-rss-service/parse"

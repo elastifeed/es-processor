@@ -17,7 +17,7 @@ ES_EXTRACTOR_URL = os.environ.get("ES_EXTRACTOR_URL") or "http://localhost:8001/
 ES_PUSHER_URL = os.environ.get("ES_PUSHER_URL") or "http://localhost:8001/api/v1/namespaces/elastifeed/services/es-pusher-service:80/proxy/add"
 REDIS_URL = os.environ.get("ES_REDIS_URL") or "redis://localhost"
 
-USER = "dummy"
+USER = "dummy2"
 
 # A couple of active feeds
 FEEDS = [
@@ -46,7 +46,9 @@ async def job(rss, redis):
             "content": await get_content(post["url"]),
             "url": post["url"],
             "isFromFeed": True,
-            "feedUrl": rss
+            "feedUrl": rss,
+            "starred": False,
+            "read_later": False
         })
 
     # Get last parsed timestamp out of redis or assume it was scraped on 10.05.2019
@@ -70,7 +72,7 @@ async def job(rss, redis):
             await t
 
         async with aiohttp.ClientSession() as sess:
-            async with sess.post(ES_PUSHER_URL, json={"index": USER, "docs": documents}) as resp:
+            async with sess.post(ES_PUSHER_URL, json={"indexes": [ USER, USER + "-DOUBLE_INDEX_TEST" ], "docs": documents}) as resp:
                 logger.info(f"Added {len(documents)} to elasticsearch index {USER}")
                 logger.debug(await resp.text())
 
