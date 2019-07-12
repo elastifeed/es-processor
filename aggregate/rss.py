@@ -6,6 +6,7 @@ import http3
 from .helper import dumps
 
 
+@dataclass
 class RssResponse:
     """ es-rss response """
     title: str
@@ -29,6 +30,5 @@ class Rss:
 
             if 200 != resp.status_code:
                 return []
-            print(resp.text)
-            print(loads(resp.text))
+
             return [RssResponse(**r) for r in loads(resp.text)]
