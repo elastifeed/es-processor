@@ -31,4 +31,4 @@ class Rss:
             if 200 != resp.status_code:
                 return []
 
-            return [RssResponse(**r) for r in loads(resp.text)]
+            return [RssResponse(**r) for r in loads(resp.text) or []]

@@ -23,6 +23,7 @@ class QueueElement:
 
 
 async def worker(redis_uri, scraper_url: str, pusher_url: str):
+    print("[+] Created worker")
     redis = await aioredis.create_connection(redis_uri)
     scraper = Scraper(scraper_url)
     pusher = Pusher(pusher_url)
@@ -36,7 +37,7 @@ async def worker(redis_uri, scraper_url: str, pusher_url: str):
             scraped = await scraper.scrape(to_process.url)
 
             to_add = Document(**{
-                "created": datetime.utcnow(),
+                "created": datetime.now().astimezone(),
                 "author": scraped.author,
                 "title": to_process.title or scraped.title,
                 "raw_content": scraped.raw_content,
@@ -53,14 +54,12 @@ async def worker(redis_uri, scraper_url: str, pusher_url: str):
 
             print(f"[+] Done scraping {to_process.url}")
 
-            pushed = dumps(
+            pushed = await pusher.push(
                 PusherRequest(
                     indexes=to_process.indexes,
                     docs=[to_add]
                 )
             )
-
-            print(to_process.indexes)
 
             if pushed:
                 print(f"[+] Done processing {to_process.url}")

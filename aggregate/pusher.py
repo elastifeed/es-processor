@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List
 import http3
-from .helper import dumps
+from .helper import cvt_nested_datetime_isoformat
 
 
 @dataclass
@@ -45,10 +45,8 @@ class Pusher:
             resp = await client.request(
                 "POST",
                 self.pusher_url,
-                json=dumps(to_push)
+                json=cvt_nested_datetime_isoformat(to_push)
             )
-
-            print(resp.text)
 
             return 200 == resp.status_code
 
