@@ -37,6 +37,7 @@ def create_app() -> Sanic:
         if app.config.RSS_SCRAPE_INTERVAL > 0:
             app.add_task(scheduler.every(
                 app, app.config.RSS_SCRAPE_INTERVAL, functools.partial(
+                    rss.worker,
                     redis_uri=app.config.REDIS,
                     rss_url=app.config.RSS,
                     rss_scrape_endpoint=app.config.RSS_SCRAPE,
