@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import List
 import aioredis
-from ujson import loads
-from sanic import Sanic
+import ujson
 import http3
+from sanic.log import logger
 from .helper import dumps
 from .job import QueueElement
 
@@ -36,7 +36,7 @@ class Rss:
                 return []
 
             # Parse json array into the correct container
-            return [RssResponse(**r) for r in loads(resp.text) or []]
+            return [RssResponse(**r) for r in ujson.loads(resp.text) or []]
 
 
 async def worker(
@@ -57,20 +57,32 @@ async def worker(
     rss = Rss(rss_url)
 
     redis = await aioredis.create_connection(redis_uri)
-    # Get last parsed timestamp out of redis or assume it was scraped on 10.05.2019
-    #  @TODO
-    last_time_raw = await redis.execute("get", "https://rss.golem.de/rss.php?feed=RSS2.0") or b"2019-05-10T00:00:00.000000+00:00"
-    last_time = datetime.fromisoformat(last_time_raw.decode("UTF-8"))
 
-    #  @TODO
-    for job in await rss.get("https://rss.golem.de/rss.php?feed=RSS2.0", last_time):
-        # Add task to queue
-        await redis.execute("RPUSH", "queue:items", dumps(QueueElement(
-            url=job.url,
-            title=job.title,
-            feed_url="https://rss.golem.de/rss.php?feed=RSS2.0",
-            indexes=["dummy_new"]  # @TODO
-        )))
+    # Get all feeds and subscribed users from endpoint
+    async with http3.AsyncClient() as client:
+        resp = await client.request("GET", rss_scrape_endpoint)
 
-    # Update timestamp
-    await redis.execute("set", "https://rss.golem.de/rss.php?feed=RSS2.0", datetime.now(timezone.utc).astimezone().isoformat())
+        if 200 != resp.status_code:
+            logger.warning(
+                f"Could not retrieve feeds from {rss_scrape_endpoint}")
+
+        parsed = ujson.loads(resp.text)
+
+        for feed in parsed:
+            # Get last parsed timestamp out of redis or assume it was scraped on 10.05.2019
+            last_time_raw = await redis.execute("get", f"feed:{feed['link']}") or b"2019-05-10T00:00:00.000000+00:00"
+            last_time = datetime.fromisoformat(last_time_raw.decode("UTF-8"))
+            for job in await rss.get(feed["link"], last_time):
+
+                # Add to queue
+                await redis.execute("RPUSH", "queue:items", dumps(QueueElement(
+                    url=job.url,
+                    title=job.title,
+                    feed_url=feed["link"],
+                    indexes=[f"user-{u['id']}" for u in feed["users"]]  # @TODO
+                )))
+
+            # Update timestamp
+            await redis.execute("set", f"feed:{feed['link']}", datetime.now(timezone.utc).astimezone().isoformat())
+            
+            logger.info(f"Parsed feed {feed['link']}")

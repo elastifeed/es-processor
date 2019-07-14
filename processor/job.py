@@ -36,8 +36,8 @@ async def worker(redis_uri: str, scraper_url: str, pusher_url: str):
     pusher = Pusher(pusher_url)
 
     while True:
+        _, queue_element = await redis.execute("BLPOP", "queue:items", "0")
         try:
-            _, queue_element = await redis.execute("BLPOP", "queue:items", "0")
             to_process = QueueElement(**ujson.loads(queue_element))
             logger.info(f"[+] Processing {to_process.url}")
 
@@ -75,4 +75,6 @@ async def worker(redis_uri: str, scraper_url: str, pusher_url: str):
 
         except Exception as e:
             logger.exception(e)
-            pass
+            # Add element to queue so we can try it again
+            # Background: Request Rate limiting
+            await redis.execute("RPUSH", "queue:items", queue_element)
