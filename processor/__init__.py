@@ -1,3 +1,4 @@
+import functools
 import aioredis
 from sanic import Sanic
 from sanic.response import json
@@ -35,7 +36,11 @@ def create_app() -> Sanic:
         # queue
         if app.config.RSS_SCRAPE_INTERVAL > 0:
             app.add_task(scheduler.every(
-                app, app.config.RSS_SCRAPE_INTERVAL, rss.worker))
+                app, app.config.RSS_SCRAPE_INTERVAL, functools.partial(
+                    redis_uri=app.config.REDIS,
+                    rss_url=app.config.RSS,
+                    rss_scrape_endpoint=app.config.RSS_SCRAPE,
+                )))
 
         # Redis for the API endpoint
         app.redis = await aioredis.create_connection(app.config.REDIS)

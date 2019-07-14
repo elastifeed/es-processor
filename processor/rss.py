@@ -42,14 +42,12 @@ class Rss:
 async def worker(
         redis_uri: str,
         rss_url: str,
-        scraper_url: str,
         rss_scrape_endpoint: str,
         loop: asyncio.AbstractEventLoop = None):
     """ pulls rss feeds from es-collector and creates a task for each of them
 
     :param redis_uri: Redis connection endpoint
     :param rss_url: es-rss endpoint
-    :param scraper_url: es-scraper endpoint
     :param rss_scrape_endpoint: es-collector endpoint
     :param loop: Eventloop on which this task should run
     """
