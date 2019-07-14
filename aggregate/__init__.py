@@ -1,3 +1,4 @@
+import aioredis
 from sanic import Sanic
 from sanic.response import json
 
@@ -5,6 +6,7 @@ from . import scheduler
 from . import scraper
 from . import job
 from . import rss
+from . import helper
 
 
 def create_app() -> Sanic:
@@ -32,11 +34,24 @@ def create_app() -> Sanic:
         # If requested, pull RSS feeds from es-collector and add jobs to the
         # queue
         if app.config.ES_SCRAPE_INTERVAL > 0:
-            app.add_task(scheduler.every(app, app.config.ES_SCRAPE_INTERVAL, rss.worker))
+            app.add_task(scheduler.every(
+                app, app.config.ES_SCRAPE_INTERVAL, rss.worker))
+
+        # Redis for the API endpoint
+        app.redis = await aioredis.create_connection(app.config.REDIS)
 
     @app.route("/add")
     async def add_job(request):  # pylint: disable-msg=unused-variable
         """ Adds a job to the task queue """
-        return json({"todo": "not implemented"})
+        try:
+            await request.app.redis.execute("LPUSH", "queue:items", dumps(
+                job.QueueElement(
+                    url=request.json["url"],
+                    title=request.json.get("title", None),
+                    indexes=request.json["indexes"]
+                )
+            ))
+        except:
+            pass
 
     return app
