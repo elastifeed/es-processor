@@ -39,8 +39,6 @@ class Pusher:
     async def push(self, to_push: PusherRequest) -> bool:
         """ Pushes to the elasticsearch gateway """
 
-        print(to_push)
-
         async with http3.AsyncClient(timeout=None) as client:
             resp = await client.request(
                 "POST",
