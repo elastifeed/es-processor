@@ -7,7 +7,7 @@ from ujson import loads
 from sanic import Sanic
 import http3
 from .helper import dumps
-from .worker import QueueElement
+from .job import QueueElement
 
 
 @dataclass
@@ -39,7 +39,7 @@ class Rss:
             return [RssResponse(**r) for r in loads(resp.text) or []]
 
 
-async def rss_task(
+async def worker(
         redis_uri: str,
         rss_url: str,
         scraper_url: str,

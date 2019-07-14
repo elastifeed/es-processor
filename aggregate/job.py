@@ -1,9 +1,9 @@
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List
 import aioredis
 import ujson
+from sanic.log import logger
 from .pusher import Document, PusherRequest, Pusher
 from .scraper import Scraper, ScrapeResponse
 
@@ -39,7 +39,7 @@ async def worker(redis_uri: str, scraper_url: str, pusher_url: str):
         try:
             _, queue_element = await redis.execute("BLPOP", "queue:items", "0")
             to_process = QueueElement(**ujson.loads(queue_element))
-            logging.info(f"[+] Processing {to_process.url}")
+            logger.info(f"[+] Processing {to_process.url}")
 
             scraped = await scraper.scrape(to_process.url)
 
@@ -59,7 +59,7 @@ async def worker(redis_uri: str, scraper_url: str, pusher_url: str):
                 "read_later": to_process.read_later
             })
 
-            print(f"[+] Done scraping {to_process.url}")
+            logger.info(f"[+] Done scraping {to_process.url}")
 
             pushed = await pusher.push(
                 PusherRequest(
@@ -69,10 +69,10 @@ async def worker(redis_uri: str, scraper_url: str, pusher_url: str):
             )
 
             if pushed:
-                logging.info(f"[+] Done processing {to_process.url}")
+                logger.info(f"[+] Done processing {to_process.url}")
             else:
-                logging.error(f"[+] Error pushing {to_process.url}")
+                logger.error(f"[+] Error pushing {to_process.url}")
 
         except Exception as e:
-            logging.exception(e)
+            logger.exception(e)
             pass
