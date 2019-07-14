@@ -33,9 +33,9 @@ def create_app() -> Sanic:
 
         # If requested, pull RSS feeds from es-collector and add jobs to the
         # queue
-        if app.config.ES_SCRAPE_INTERVAL > 0:
+        if app.config.RSS_SCRAPE_INTERVAL > 0:
             app.add_task(scheduler.every(
-                app, app.config.ES_SCRAPE_INTERVAL, rss.worker))
+                app, app.config.RSS_SCRAPE_INTERVAL, rss.worker))
 
         # Redis for the API endpoint
         app.redis = await aioredis.create_connection(app.config.REDIS)
