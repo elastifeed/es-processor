@@ -40,7 +40,7 @@ def create_app() -> Sanic:
         # Redis for the API endpoint
         app.redis = await aioredis.create_connection(app.config.REDIS)
 
-    @app.route("/add")
+    @app.route("/add", methods=["POST"])
     async def add_job(request):  # pylint: disable-msg=unused-variable
         """ Adds a job to the task queue """
         try:
