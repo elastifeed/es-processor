@@ -50,14 +50,16 @@ def create_app() -> Sanic:
     async def add_job(request):  # pylint: disable-msg=unused-variable
         """ Adds a job to the task queue """
         try:
-            await request.app.redis.execute("LPUSH", "queue:items", dumps(
+            await request.app.redis.execute("LPUSH", "queue:items", helper.dumps(
                 job.QueueElement(
                     url=request.json["url"],
                     title=request.json.get("title", None),
                     indexes=request.json["indexes"]
                 )
             ))
-        except:
-            pass
+            return json({"status": "ok"})
+        except Exception as e:
+            print(e)
+            return json({"status": "failed"})
 
     return app
