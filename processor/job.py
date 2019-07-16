@@ -12,6 +12,7 @@ class QueueElement:
     """ Queued job element stored in redis """
     url: str
     indexes: List[str]
+    categories: List[str]
     title: str = None
     feed_url: str = None
     starred: bool = False
@@ -55,6 +56,7 @@ async def worker(redis_uri: str, scraper_url: str, pusher_url: str):
                 "url": to_process.url,
                 "from_feed": to_process.from_feed,
                 "feed_url": to_process.feed_url,
+                "categories": to_process.categories,
                 "starred": to_process.starred,
                 "read_later": to_process.read_later
             })

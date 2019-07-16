@@ -19,6 +19,7 @@ class Document:
     url: str
     from_feed: bool
     feed_url: str
+    categories: List[str]
     starred: bool
     read_later: bool
 
