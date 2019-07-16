@@ -79,6 +79,7 @@ async def worker(
                     url=job.url,
                     title=job.title,
                     feed_url=feed["link"],
+                    categories=[],
                     indexes=[f"user-{u['id']}" for u in feed["users"]]  # @TODO
                 )))
 
