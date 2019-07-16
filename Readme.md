@@ -17,6 +17,7 @@ POST /add
 {
     "url": "url to add",
     "title": "if you want to, set a title here",
-    "indexes": ["user1", "user2", ...]
+    "indexes": [1, 3, ...]
+    "categories": ["test", "some", "categories", ...]
 }
 ```
