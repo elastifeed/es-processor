@@ -46,7 +46,7 @@ async def worker(redis_uri: str, scraper_url: str, pusher_url: str):
 
             to_add = Document(**{
                 "created": datetime.now().astimezone(),
-                "author": scraped.author,
+                "author": scraped.author or "",
                 "title": to_process.title or scraped.title,
                 "raw_content": scraped.raw_content,
                 "markdown_content": scraped.markdown_content,

@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List
 from ujson import loads
 from sanic import Sanic
+from sanic.log import logger
 import http3
 
 
@@ -26,8 +27,11 @@ class ScrapeResponse:
     markdown_content: str
     total_pages: int
     next_page_url: str
-    rendered_pages: int
     word_count: int
+    # @TODO. Somehow it gets one of these two xD
+    rendered_pages: int = 0
+    pages_rendered: int = 0
+
 
 
 class Scraper:
@@ -48,8 +52,9 @@ class Scraper:
                 if 200 != resp.status_code:
                     return None
 
-                # Try to load resposne into the container
+                # Try to load response into the container
                 return ScrapeResponse(**loads(resp.text))
 
             except Exception as e:  # @TODO
+                logger.exception(e)
                 return None

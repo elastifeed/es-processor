@@ -80,7 +80,7 @@ async def worker(
                     title=job.title,
                     feed_url=feed["link"],
                     categories=[],
-                    indexes=[f"user-{u['id']}" for u in feed["users"]]  # @TODO
+                    indexes=[f"user-{u['id']}" for u in feed["users"]]
                 )))
 
             # Update timestamp
