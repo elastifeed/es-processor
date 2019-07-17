@@ -54,7 +54,7 @@ def create_app() -> Sanic:
                 job.QueueElement(
                     url=request.json["url"],
                     title=request.json.get("title", None),
-                    indexes=[ f"user-{u}]" for u in request.json["indexes"]],
+                    indexes=[ f"user-{u}" for u in request.json["indexes"]],
                     categories=request.json["categories"]
                 )
             ))
