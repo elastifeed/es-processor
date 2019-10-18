@@ -12,7 +12,6 @@ import http3
 class ScrapeResponse:
     """ Response from the scraper """
 
-    author: str
     title: str
     date_published: str
     dek: str
@@ -53,7 +52,12 @@ class Scraper:
                     return None
 
                 # Try to load response into the container
-                return ScrapeResponse(**loads(resp.text))
+                resp = loads(resp.text):
+                if resp:
+                    return ScrapeResponse(**loads(resp.text))
+                else:
+                    logger.error("scraper did not return the correct result")
+                    retur None
 
             except Exception as e:  # @TODO
                 logger.exception(e)
